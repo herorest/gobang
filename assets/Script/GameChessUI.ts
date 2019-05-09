@@ -1,9 +1,10 @@
+import { GameChessType } from './GameData';
 import Config from "./Config";
 
 const {ccclass, property} = cc._decorator;
 
 @ccclass
-export default class GameChess extends cc.Component {
+export default class GameChessUI extends cc.Component {
 
     @property(cc.Node)
     chessWhite: cc.Node = null;
@@ -16,5 +17,11 @@ export default class GameChess extends cc.Component {
 
     onLoad () {
         
+    }
+
+    setChessType(gameChess){
+        this.chessWhite.active = gameChess.chessType === GameChessType.White;
+        this.chessBlack.active = gameChess.chessType === GameChessType.Black;
+        this.pointRed.active = gameChess.isLastPutChess;
     }
 }
