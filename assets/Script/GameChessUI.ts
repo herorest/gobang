@@ -15,6 +15,10 @@ export default class GameChessUI extends cc.Component {
     @property(cc.Node)
     pointRed: cc.Node = null;
 
+    i: number;
+
+    j: number;
+
     onLoad () {
         
     }
@@ -23,5 +27,9 @@ export default class GameChessUI extends cc.Component {
         this.chessWhite.active = gameChess.chessType === GameChessType.White;
         this.chessBlack.active = gameChess.chessType === GameChessType.Black;
         this.pointRed.active = gameChess.isLastPutChess;
+    }
+
+    onClick(){
+
     }
 }
