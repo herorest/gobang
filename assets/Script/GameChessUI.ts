@@ -1,5 +1,5 @@
 import { GameChessType } from './GameData';
-import Config from "./Config";
+import GameMain from './GameMain';
 
 const {ccclass, property} = cc._decorator;
 
@@ -15,12 +15,14 @@ export default class GameChessUI extends cc.Component {
     @property(cc.Node)
     pointRed: cc.Node = null;
 
+    main;
+
     i: number;
 
     j: number;
 
     onLoad () {
-        
+
     }
 
     setChessType(gameChess){
@@ -30,6 +32,6 @@ export default class GameChessUI extends cc.Component {
     }
 
     onClick(){
-
+        this.main.putChess(this.i, this.j);
     }
 }
