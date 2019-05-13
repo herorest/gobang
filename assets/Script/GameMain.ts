@@ -92,6 +92,84 @@ export default class GameMain extends cc.Component {
         data.isLastPutChess = true;
         this.allChess[i][j].setChessType(data);
         this.lastChess = this.allChess[i][j];
+
+        this.checkWin(i, j);
         this.changePlayer();
+    }
+
+    checkWin(i, j){
+        let ct = this.gameData.getChessData(i, j).chessType
+        this.checkHorizontral(i, j, ct);
+    }
+
+    checkHorizontral(i, j, chessType){
+        let total = 1;
+        let posI;
+
+        for(posI = i - 1; posI >= 0; posI--){
+            if(this.gameData.getChessData(posI, j).chessType === chessType){
+                total ++;
+            }else{
+                break;
+            }
+        }
+
+        for(posI = i + 1; posI < Config.gridCount; posI++){
+            if(this.gameData.getChessData(posI, j).chessType === chessType){
+                total ++;
+            }else{
+                break;
+            }
+        }
+
+        if(total >= 5){
+            return true;
+        }
+
+        return false;
+    }
+
+    checkVertical(i, j, chessType){
+        let total = 1;
+        let posJ;
+
+        for(posJ = j - 1; posJ >= 0; posJ--){
+            if(this.gameData.getChessData(i, posJ).chessType === chessType){
+                total ++;
+            }else{
+                break;
+            }
+        }
+
+        for(posJ = j + 1; posJ < Config.gridCount; posJ++){
+            if(this.gameData.getChessData(i, posJ).chessType === chessType){
+                total ++;
+            }else{
+                break;
+            }
+        }
+
+        if(total >= 5){
+            return true;
+        }
+
+        return false;
+    }
+
+    checkObliqueUp(i, j, chessType){
+        let total = 1;
+        let posJ;
+
+
+        if(total >= 5){
+            return true;
+        }
+
+        return false;
+    }
+
+    checkObliqueDown(i, j, chessType){
+        
+        return false;
     }
 }

@@ -13,6 +13,10 @@ export default class GameData {
             }
         }
     }
+
+    getChessData(i, j){
+        return this.data[i][j];
+    }
 }
 
 class GameChess{
