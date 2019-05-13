@@ -93,13 +93,21 @@ export default class GameMain extends cc.Component {
         this.allChess[i][j].setChessType(data);
         this.lastChess = this.allChess[i][j];
 
-        this.checkWin(i, j);
-        this.changePlayer();
+        let result = this.checkWin(i, j);
+
+        if(result){
+            alert('over');
+            return;
+        }else{
+            this.changePlayer();
+        }
+        
     }
 
     checkWin(i, j){
         let ct = this.gameData.getChessData(i, j).chessType
-        this.checkHorizontral(i, j, ct);
+        let result = this.checkHorizontral(i, j, ct) || this.checkVertical(i, j, ct) || this.checkObliqueUp(i, j, ct) || this.checkObliqueDown(i, j, ct);
+        return result;
     }
 
     checkHorizontral(i, j, chessType){
@@ -158,8 +166,23 @@ export default class GameMain extends cc.Component {
 
     checkObliqueUp(i, j, chessType){
         let total = 1;
-        let posJ;
+        let posI, posJ;
 
+        for((posI = i - 1,posJ = j - 1); (posI >= 0 && posJ >= 0); (posI--, posJ--)){
+            if(this.gameData.getChessData(posI, posJ).chessType === chessType){
+                total ++;
+            }else{
+                break;
+            }
+        }
+
+        for((posI = i + 1,posJ = j + 1); (posI < Config.gridCount && posJ < Config.gridCount); (posI++, posJ++)){
+            if(this.gameData.getChessData(posI, posJ).chessType === chessType){
+                total ++;
+            }else{
+                break;
+            }
+        }
 
         if(total >= 5){
             return true;
@@ -169,7 +192,29 @@ export default class GameMain extends cc.Component {
     }
 
     checkObliqueDown(i, j, chessType){
-        
+        let total = 1;
+        let posI, posJ;
+
+        for((posI = i + 1,posJ = j - 1); (posI < Config.gridCount && posJ >= 0); (posI++, posJ--)){
+            if(this.gameData.getChessData(posI, posJ).chessType === chessType){
+                total ++;
+            }else{
+                break;
+            }
+        }
+
+        for((posI = i - 1,posJ = j + 1); (posI >= 0 && posJ < Config.gridCount); (posI--, posJ++)){
+            if(this.gameData.getChessData(posI, posJ).chessType === chessType){
+                total ++;
+            }else{
+                break;
+            }
+        }
+
+        if(total >= 5){
+            return true;
+        }
+
         return false;
     }
 }
