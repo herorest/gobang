@@ -1,5 +1,4 @@
 import { GameChessType } from './GameData';
-import GameMain from './GameMain';
 
 const {ccclass, property} = cc._decorator;
 
