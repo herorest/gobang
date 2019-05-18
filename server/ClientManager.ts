@@ -1,5 +1,5 @@
 import Client from './Client';
-import GameMessageBase, { GameMessageType } from './GameMessageBase';
+import GameMessageBase, { GameMessageType, GameMessageMatchOver } from './GameMessageBase';
 
 export default class ClientManager{
 
@@ -29,12 +29,17 @@ export default class ClientManager{
             client.pairClient = pair;
             pair.pairClient = client;
 
-            let msg = new GameMessageBase();
-            msg.type = GameMessageType.S2C_MatchOver;
+            let uid0 = 1000;
+            let uid1 = 2000;
 
-            console.log('match over', msg);
-            client.sendMsg(msg);
-            pair.sendMsg(msg);
+            let msg0 = new GameMessageMatchOver(uid0, uid1, 1);
+            msg0.type = GameMessageType.S2C_MatchOver;
+            client.sendMsg(msg0);
+
+
+            let msg1 = new GameMessageMatchOver(uid1, uid0, 2);
+            msg1.type = GameMessageType.S2C_MatchOver;
+            pair.sendMsg(msg1);
         }
     }
 

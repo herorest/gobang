@@ -1,7 +1,12 @@
+import { GameMessagePut, GameMessageMatchOver } from './GameMessageBase';
+import { Helper } from './Helper';
 import Config from "./Config";
 import GameData, { GameChessType } from "./GameData";
 import GameChessUI from "./GameChessUI";
 import GamePlayer from "./GamePlayer";
+import WSClient from "./WSClient";
+import EventDefine from './EventDefine';
+import EventCenter from './EventCenter';
 
 const {ccclass, property} = cc._decorator;
 
@@ -13,6 +18,9 @@ export default class GameMain extends cc.Component {
 
     @property(cc.Prefab)
     prefabChess: cc.Prefab = null;
+
+    @property(cc.Label)
+    label: cc.Label = null;
 
     gameData = null;
 
@@ -46,31 +54,51 @@ export default class GameMain extends cc.Component {
         }
 
         this.refresh();
-        this.createPlayer();
+
+        EventCenter.registEvent(EventDefine.EVENT_MATCH_OVER, this.onMsgMatchOver, this);
+        EventCenter.registEvent(EventDefine.EVENT_PUT, this.onMsgPut, this);
     }
 
-    createPlayer(){
+    onMsgMatchOver(msg: GameMessageMatchOver){
         let self = new GamePlayer();
-        self.uid = 1;
+        self.uid = msg.myUid;
         self.userName = 'myself';
         self.isSelfPlayer = true;
-        self.chessType = GameChessType.White;
+        self.chessType = msg.myChessType;
         this.self = self;
-        this.curr = self;
 
         let other = new GamePlayer();
-        other.uid = 2;
+        other.uid = msg.otherUid;
         other.userName = 'other';
-        other.isSelfPlayer = true;
-        other.chessType = GameChessType.Black;
+        other.isSelfPlayer = false;
+        other.chessType = msg.myChessType === GameChessType.Black ? GameChessType.White : GameChessType.Black;
         this.other = other;
+
+        // 白子先下
+        if(self.chessType === GameChessType.White){
+            this.curr = self;
+        }else{
+            this.curr = other;
+        }
+
+        this.updateRound();
     }
 
-    changePlayer(){
-        if(this.curr.uid === 1){
-            this.curr =  this.other;
+    changePlayer(currUid){
+        console.log('----change', currUid);
+        if(currUid === this.other.uid){
+            this.curr =  this.self;
         }else{
-            this.curr = this.self;
+            this.curr = this.other;
+        }
+    }
+
+    updateRound(){
+        console.log(this.curr.uid , this.self.uid);
+        if(this.curr.uid === this.self.uid){
+            this.label.string = "你的回合";
+        }else{
+            this.label.string = "对方的回合";
         }
     }
 
@@ -83,13 +111,37 @@ export default class GameMain extends cc.Component {
     }
 
     putChess(i, j){
+
+        if(!this.curr){
+            return;
+        }
+
+        // 如果是自己，发出下子的消息
+        if(this.curr.isSelfPlayer){
+            WSClient.getInstance().send(new GameMessagePut(this.curr.uid, i, j));
+        }
+
+        this.curr = null;
+    }
+
+    onMsgPut(msg){
+
+        let uid = msg.uid, i = msg.i, j = msg.j;
+
+        let player = this.getPlayer(uid)
+
+        // 位置上一定为空的才能落子
         let data = this.gameData.data[i][j];
         if(data.chessType !== GameChessType.None){
             return;
         }
+
+        // 去掉之前棋子上的红色记号
         this.lastChess && (this.lastChess.pointRed.active = false);
-        data.chessType = this.curr.chessType;
+        data.chessType = player.chessType;
         data.isLastPutChess = true;
+
+
         this.allChess[i][j].setChessType(data);
         this.lastChess = this.allChess[i][j];
 
@@ -99,122 +151,25 @@ export default class GameMain extends cc.Component {
             alert('over');
             return;
         }else{
-            this.changePlayer();
+            this.changePlayer(uid);
         }
-        
+
+        this.updateRound();
+    }
+
+    getPlayer(uid){
+        if(uid == this.self.uid){
+            return this.self;
+        }else if(uid == this.other.uid){
+            return this.other;
+        }
     }
 
     checkWin(i, j){
         let ct = this.gameData.getChessData(i, j).chessType
-        let result = this.checkHorizontral(i, j, ct) || this.checkVertical(i, j, ct) || this.checkObliqueUp(i, j, ct) || this.checkObliqueDown(i, j, ct);
+        let result = Helper.checkHorizontral(this.gameData, i, j, ct) || Helper.checkVertical(this.gameData, i, j, ct) || Helper.checkObliqueUp(this.gameData, i, j, ct) || Helper.checkObliqueDown(this.gameData, i, j, ct);
         return result;
     }
 
-    checkHorizontral(i, j, chessType){
-        let total = 1;
-        let posI;
-
-        for(posI = i - 1; posI >= 0; posI--){
-            if(this.gameData.getChessData(posI, j).chessType === chessType){
-                total ++;
-            }else{
-                break;
-            }
-        }
-
-        for(posI = i + 1; posI < Config.gridCount; posI++){
-            if(this.gameData.getChessData(posI, j).chessType === chessType){
-                total ++;
-            }else{
-                break;
-            }
-        }
-
-        if(total >= 5){
-            return true;
-        }
-
-        return false;
-    }
-
-    checkVertical(i, j, chessType){
-        let total = 1;
-        let posJ;
-
-        for(posJ = j - 1; posJ >= 0; posJ--){
-            if(this.gameData.getChessData(i, posJ).chessType === chessType){
-                total ++;
-            }else{
-                break;
-            }
-        }
-
-        for(posJ = j + 1; posJ < Config.gridCount; posJ++){
-            if(this.gameData.getChessData(i, posJ).chessType === chessType){
-                total ++;
-            }else{
-                break;
-            }
-        }
-
-        if(total >= 5){
-            return true;
-        }
-
-        return false;
-    }
-
-    checkObliqueUp(i, j, chessType){
-        let total = 1;
-        let posI, posJ;
-
-        for((posI = i - 1,posJ = j - 1); (posI >= 0 && posJ >= 0); (posI--, posJ--)){
-            if(this.gameData.getChessData(posI, posJ).chessType === chessType){
-                total ++;
-            }else{
-                break;
-            }
-        }
-
-        for((posI = i + 1,posJ = j + 1); (posI < Config.gridCount && posJ < Config.gridCount); (posI++, posJ++)){
-            if(this.gameData.getChessData(posI, posJ).chessType === chessType){
-                total ++;
-            }else{
-                break;
-            }
-        }
-
-        if(total >= 5){
-            return true;
-        }
-
-        return false;
-    }
-
-    checkObliqueDown(i, j, chessType){
-        let total = 1;
-        let posI, posJ;
-
-        for((posI = i + 1,posJ = j - 1); (posI < Config.gridCount && posJ >= 0); (posI++, posJ--)){
-            if(this.gameData.getChessData(posI, posJ).chessType === chessType){
-                total ++;
-            }else{
-                break;
-            }
-        }
-
-        for((posI = i - 1,posJ = j + 1); (posI >= 0 && posJ < Config.gridCount); (posI--, posJ++)){
-            if(this.gameData.getChessData(posI, posJ).chessType === chessType){
-                total ++;
-            }else{
-                break;
-            }
-        }
-
-        if(total >= 5){
-            return true;
-        }
-
-        return false;
-    }
+    
 }

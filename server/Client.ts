@@ -6,8 +6,8 @@ import GameMessageBase, { GameMessageType } from "./GameMessageBase";
 import ClientManager from "./ClientManager";
 
 export default class Client{
-    ws: WebSocket;
-    pairClient: Client;
+    ws: WebSocket; 
+    pairClient: Client; // 指向对手的client
 
     constructor(socket){
         this.ws = socket;
@@ -17,12 +17,13 @@ export default class Client{
 
     onMessage(data){
         let msg = JSON.parse(data);
-        console.log(msg);
         if(msg.type == GameMessageType.Hello){
-            console.log('=====hello');
+
         }else if(msg.type == GameMessageType.Match){
-            console.log('=====matching');
             ClientManager.getInstance().match(this);
+        }else if(msg.type == GameMessageType.C2S_Put){
+            this.sendMsg(msg);
+            this.pairClient.sendMsg(msg);
         }
     }
 
