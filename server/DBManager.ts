@@ -8,7 +8,7 @@ export default class DBManager extends Singleton<DBManager> {
 
     userCollection: Collection;
 
-    connectDB(){
+    connectDB(cb){
         
         // 接入 mongodb
         let dbUrl = "mongodb://localhost:27017";
@@ -21,7 +21,8 @@ export default class DBManager extends Singleton<DBManager> {
             this.db = db.db('five');
             
             this.userCollection = this.db.collection('user');
-
+            
+            cb && cb();
         });
     }
 
